@@ -1,36 +1,61 @@
-import pytest
-import requests
-import json
+import os
 
+import pytest, requests, json
+import yaml
 
-# 发送get请求
-# def get(url, params=None, **kwargs):
-def close_databases():
-    print("关闭数据库")
+from common.yaml_util import YamlUtil
 
 
 class TestQuest:
-    access_token = ""
-
-    def test_get_token(self):
-        url = "https://oauth.cnblogs.com/connect/token"
+    def get_pass(self):
+        url = "http://192.168.66.189:5700/open/auth/token"
         data = {
-            "client_id": "210d0d6e-e5cb-48bf-a5dd-f42c08e91cea",
-            "client_secret": "lsf2Ovxl0cIxC75qsXhk-eUaPBN6VTBAKayEMvbY0Ajku8e2G6fBlcugnozXnI_JF4160o7XvViwywOC",
-            "grant_type": "client_credentials",
+            "client_id": "_tOi5uqRN1S4",
+            "client_secret": "rTl1_ypWCeUDA5bhj8C3H9ez"
         }
-        rep = requests.post(url, data=data)
-        print(rep.json())
-        access_token = rep.json()["access_token"]
-        return access_token
+        res = requests.get(url, params=data)
+        # 将token存入到文件中去
+        YamlUtil().write_yaml({"token": res.json()["data"]["token"]})
 
-    # def test_use_token(self):
-    #     self.test_get_token(self)
-    def q_qq(self, conn_database):
-        print("qqq" + TestQuest.access_token)
+    """
+    获取token
+    """
 
-    def q_a(self, conn_database):
-        print("qqq")
+    def ge_token(self):
+        url = "http://192.168.66.189:5700/api/user/login"
+        data = {
+            "username": "root",
+            "password": "774522"
+        }
+        r = requests.post(url, data=data)
+        # 将token存入到文件中去
+        YamlUtil().write_yaml({"token": r.json()["data"]["token"]})
 
+    # 获取所有环境变量账号密码token
+    def ge_eves(self):
+        url = "http://192.168.66.189:5700/api/envs"
+        data = {
+            "Authorization": "Bearer " + YamlUtil().read_yaml("token")
+        }
+        res = requests.get(url, headers=data)
+        try:
+            with open("E:\\python\\接口自动化学习\\1-100\\青龙面板测试\\所有的环境变量.txt", "w", encoding="utf-8") as f:
+                eves = {res.json()["data"][0]["name"]: res.json()["data"][0]["value"]}
+                yaml.dump(data=eves, stream=f)
+        except (FileNotFoundError, OSError):
+            print("没有这个文件夹")
 
+        # 获取所有环境变量应用token
 
+    def get_eves(self):
+        url = "http://192.168.66.189:5700/open/envs"
+        data = {
+            "Authorization": "Bearer " + YamlUtil().read_yaml("token")
+        }
+        res = requests.get(url, headers=data)
+        try:
+            with open("E:\\python\\接口自动化学习\\1-100\\青龙面板测试\\所有的环境变量.txt", "w", encoding="utf-8") as f:
+                eves = {res.json()["data"][0]["name"]: res.json()["data"][0]["value"]}
+                yaml.dump(data=eves, stream=f)
+        except (FileNotFoundError, OSError):
+            print("没有这个文件夹")
